@@ -1,13 +1,15 @@
 import os
 from dotenv import load_dotenv
+load_dotenv()
 from flask import Flask, render_template, request, jsonify
 import google.generativeai as genai
 
 app = Flask(__name__) 
-load_dotenv()
 
-# 1. Cấu hình API Key (Thay mã của bạn vào đây)
+# Lấy key từ môi trường (Render sẽ đọc từ tab Environment)
 GOOGLE_API_KEY = os.getenv("GEMINI_KEY")
+
+# Cấu hình cho thư viện Google AI
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # 2. Khởi tạo mô hình Gemini
