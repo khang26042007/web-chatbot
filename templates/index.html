@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My AI Chatbot</title>
+    <style>
+        body { font-family: Arial; display: flex; flex-direction: column; align-items: center; background: #f0f2f5; }
+        #chat-box { width: 400px; height: 500px; border: 1px solid #ccc; background: white; overflow-y: scroll; padding: 10px; margin-top: 50px; border-radius: 10px; }
+        #input-area { margin-top: 10px; }
+        input { padding: 10px; width: 300px; border-radius: 5px; border: 1px solid #ddd; }
+        button { padding: 10px; background: #0084ff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🤖 My Web Chatbot</h2>
+    <div id="chat-box"></div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Nhập tin nhắn...">
+        <button onclick="sendMessage()">Gửi</button>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const box = document.getElementById('chat-box');
+            if(!input.value) return;
+
+            box.innerHTML += `<p><b>Bạn:</b> ${input.value}</p>`;
+            
+            const response = await fetch('/get_response', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({msg: input.value})
+            });
+            const data = await response.json();
+            box.innerHTML += `<p style="color: blue"><b>Bot:</b> ${data.reply}</p>`;
+            input.value = '';
+            box.scrollTop = box.scrollHeight;
+        }
+    </script>
+</body>
+</html>
