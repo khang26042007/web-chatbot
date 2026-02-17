@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Clone UI</title>
+    <title>Gemini Chatbot</title>
     <style>
         :root {
             --bg-color: #f8fafd;
-            --chat-bg: #ffffff;
+            --chat-bg: #fff;
             --primary-gradient: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
             --text-main: #1f1f1f;
             --text-secondary: #444746;
@@ -15,38 +15,127 @@
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Google Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
             color: var(--text-main);
             margin: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
         }
 
-        /* Header */
         header {
-            padding: 20px;
-            font-size: 22px;
-            font-weight: 500;
+            width: 100vw;
             background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            width: fit-content;
-            margin-left: 20px;
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 32px 0 24px 0;
+            text-align: center;
+            margin-bottom: 0;
+            box-shadow: 0 2px 12px rgba(60,64,67,0.07);
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
         }
 
-        /* Khung chat */
-        #chat-container {
+        #main {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            min-height: 0;
+        }
+
+        #chat-container {
+            width: 100%;
+            max-width: 600px;
+            flex: 1;
+            background: var(--chat-bg);
+            margin: 32px auto 0 auto;
+            border-radius: 24px;
+            box-shadow: 0 2px 16px rgba(60,64,67,0.08);
+            padding: 32px 24px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
             overflow-y: auto;
-            padding: 20px;
-            max-width: 800px;
+            min-height: 300px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .user {
+            justify-content: flex-end;
+        }
+        .bot {
+            justify-content: flex-start;
+        }
+        .bubble {
+            padding: 14px 20px;
+            border-radius: 18px;
+            max-width: 70%;
+            font-size: 16px;
+            line-height: 1.5;
+            box-shadow: 0 1px 4px rgba(60,64,67,0.04);
+        }
+        .bubble.user {
+            background: var(--primary-gradient);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .bubble.bot {
+            background: var(--bot-bubble);
+            color: var(--text-secondary);
+            border-bottom-left-radius: 4px;
+        }
+        #input-area {
+            display: flex;
+            gap: 10px;
+            padding: 24px 0 32px 0;
+            max-width: 600px;
             width: 100%;
             margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            background: transparent;
+        }
+        #user-input {
+            flex: 1;
+            padding: 14px;
+            font-size: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            outline: none;
+            background: #fff;
+        }
+        #send-btn {
+            background: var(--primary-gradient);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 0 28px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        #send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .loading {
+            font-style: italic;
+            color: #888;
+            margin-left: 10px;
+        }
+        @media (max-width: 700px) {
+            #chat-container, #input-area {
+                max-width: 98vw;
+                padding-left: 2vw;
+                padding-right: 2vw;
+            }
         }
 
         .message {
@@ -129,49 +218,74 @@
 <body>
 
     <header>Gemini</header>
-
-    <div id="chat-container">
-        <div class="message bot-msg">Chào bạn! Mình có thể giúp gì cho bạn hôm nay?</div>
-    </div>
-
-    <div class="input-wrapper">
-        <div id="input-container">
-            <input type="text" id="user-input" placeholder="Nhập câu hỏi tại đây..." onkeypress="if(event.key === 'Enter') sendMessage()">
-            <button onclick="sendMessage()">
-                <svg viewBox="0 0 24 24" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-            </button>
+    <div id="main">
+        <div id="chat-container">
+            <div class="message bot"><div class="bubble bot">Chào bạn! Mình có thể giúp gì cho bạn hôm nay?</div></div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Nhập câu hỏi tại đây..." autocomplete="off" />
+            <button id="send-btn">Gửi</button>
         </div>
     </div>
-
     <script>
-        async function sendMessage() {
-            const input = document.getElementById('user-input');
-            const container = document.getElementById('chat-container');
-            const message = input.value.trim();
-            
-            if (!message) return;
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
 
-            // Hiển thị tin nhắn người dùng
-            container.innerHTML += `<div class="message user-msg">${message}</div>`;
-            input.value = '';
-            container.scrollTop = container.scrollHeight;
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + sender;
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble ' + sender;
+            bubble.textContent = text;
+            msgDiv.appendChild(bubble);
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
 
-            // Gọi API Flask
-            try {
-                const response = await fetch('/get_response', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({msg: message})
-                });
-                const data = await response.json();
-                
-                // Hiển thị tin nhắn Bot
-                container.innerHTML += `<div class="message bot-msg">${data.reply}</div>`;
-                container.scrollTop = container.scrollHeight;
-            } catch (error) {
-                console.error("Lỗi:", error);
+        function setLoading(isLoading) {
+            let loadingDiv = document.getElementById('loading-msg');
+            if (isLoading) {
+                if (!loadingDiv) {
+                    loadingDiv = document.createElement('div');
+                    loadingDiv.id = 'loading-msg';
+                    loadingDiv.className = 'message bot';
+                    loadingDiv.innerHTML = '<span class="bubble bot loading">Đang trả lời...</span>';
+                    chatContainer.appendChild(loadingDiv);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            } else {
+                if (loadingDiv) loadingDiv.remove();
             }
         }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+            appendMessage(text, 'user');
+            userInput.value = '';
+            setLoading(true);
+            sendBtn.disabled = true;
+            try {
+                const res = await fetch('/get_response', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ msg: text })
+                });
+                const data = await res.json();
+                setLoading(false);
+                appendMessage(data.reply, 'bot');
+            } catch (e) {
+                setLoading(false);
+                appendMessage('Lỗi kết nối. Vui lòng thử lại.', 'bot');
+            }
+            sendBtn.disabled = false;
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
     </script>
 </body>
 </html>
